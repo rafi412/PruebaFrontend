@@ -1,3 +1,5 @@
+/* Base de datos simulada para auditorías */
+
 import type { Audit } from "../types";
 
 const PROCESSES = ['Compras', 'Ventas', 'Seguridad', 'RRHH', 'Operaciones'];

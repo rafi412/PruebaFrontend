@@ -1,3 +1,5 @@
+/*  */ 
+
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import type { Audit } from '../types';
@@ -7,7 +9,7 @@ export function useAudits() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState(''); // Nuevo estado
+  const [search, setSearch] = useState(''); 
   const [total, setTotal] = useState(0);
   const pageSize = 8;
 
