@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Esto asegura que la app ocupe todo el alto y no tenga márgenes raros */
+:root, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
