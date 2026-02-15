@@ -1,3 +1,5 @@
+/* API simulada para devolver datos */
+
 import { dbAudits } from "../mocks/db";
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
