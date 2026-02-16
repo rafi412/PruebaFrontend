@@ -15,6 +15,11 @@ import { useAudits } from '../hooks/useAudits';
 import { StatusBadge } from '../components/StatusBadge';
 import { AuditSkeleton } from '../components/AuditSkeleton';
 
+/** - Búsqueda 
+ * - Paginación
+ * - Manejo de estados (carga, error, vacío)
+ * - Navegación a detalle
+ */
 export default function AuditList() {
   const navigate = useNavigate();
   const { 
@@ -32,6 +37,7 @@ export default function AuditList() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // DEBOUNCE: Esperamos 300ms antes de disparar la búsqueda real a la API
+  // Para un equilibrio entre búsqueda en tiempo real y no saturar la API con cada letra
   useEffect(() => {
     const timer = setTimeout(() => {
       handleSearch(searchTerm);

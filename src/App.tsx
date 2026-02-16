@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import AuditList from './pages/AuditList';
-import AuditDetail from './pages/AuditListDetail';
+import AuditDetail from './pages/AuditDetail';
 
 function App() {
   return (
