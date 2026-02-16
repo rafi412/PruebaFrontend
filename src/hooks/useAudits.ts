@@ -9,7 +9,6 @@ export function useAudits() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
-  const pageSize = 8;
 
   // Leemos los valores directamente de la URL
   const page = Number(searchParams.get('page')) || 1;

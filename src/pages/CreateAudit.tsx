@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, ClipboardList, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { api } from '../services/api';
 import { dbTemplates, dbUsers } from '../mocks/db';
 import { cn } from '../utils/cn';
