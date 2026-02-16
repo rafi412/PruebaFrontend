@@ -1,61 +1,60 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom'; // Importante
 import { api } from '../services/api';
 import type { Audit } from '../types';
 
-/**
- * Hook para gestionar auditorías:
- * - Obtiene datos desde la API
- * - Maneja paginación y búsqueda
- * - Controla estados de carga y error
- */
 export function useAudits() {
-  // Estados principales
+  const [searchParams, setSearchParams] = useSearchParams();
   const [audits, setAudits] = useState<Audit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Estados de paginación y búsqueda
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [total, setTotal] = useState(0);
+  const pageSize = 8;
 
-  const pageSize = 8; // Número de elementos por página
+  // Leemos los valores directamente de la URL
+  const page = Number(searchParams.get('page')) || 1;
+  const search = searchParams.get('q') || '';
+  const sort = searchParams.get('sort') || 'createdAt';
+  const order = searchParams.get('order') || 'desc';
 
-  // Obtiene auditorías desde la API según página y búsqueda
-  const fetchAudits = async () => {
+  // Función para cargar auditorías con los parámetros de búsqueda
+  const fetchAudits = useCallback(async () => {
     setLoading(true);
+    setError(null); // Limpiamos el error antes de empezar
     try {
-      const data = await api.getAudits(page, pageSize, search);
+      const data = await api.getAudits(page, 8, search, sort, order);
       setAudits(data.items);
       setTotal(data.total);
-      setError(null); // Limpia error si la petición fue exitosa
-    } catch {
-      setError("Error de conexión");
+    } catch (err) {
+      setError("No se pudieron cargar los datos. Reintenta de nuevo.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, sort, order]); // Se recrea solo si cambian los filtros
 
-  // Vuelve a cargar datos cuando cambia la página o la búsqueda
+  // Sincronizamos la carga con los cambios en la URL
   useEffect(() => {
     fetchAudits();
-  }, [page, search]);
+  }, [fetchAudits]);
 
-  // Actualiza búsqueda y reinicia a la primera página
-  const handleSearch = (query: string) => {
-    setSearch(query);
-    setPage(1);
+  /**
+   * Actualiza la URL con los nuevos filtros.
+   * Esto disparará automáticamente el useEffect superior.
+   */
+  const updateFilters = (newParams: any) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === undefined || value === '') params.delete(key);
+      else params.set(key, value as string);
+    });
+    if (newParams.q !== undefined) params.set('page', '1');
+    setSearchParams(params);
   };
 
-  // Datos y funciones expuestas por el hook
   return {
-    audits,
-    loading,
-    error,
-    page,
-    setPage,
-    totalPages: Math.ceil(total / pageSize),
-    retry: fetchAudits,
-    handleSearch
+    audits, loading, error, page, search, sort, order,
+    totalPages: Math.ceil(total / 8),
+    updateFilters,
+    retry: fetchAudits
   };
 }
