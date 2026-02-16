@@ -71,21 +71,34 @@ export const api = {
    * Actualiza el estado o datos de un check específico dentro de una auditoría.
    */
   updateCheck: async (auditId: string, checkId: string, data: Partial<Check>) => {
-    await delay(200); // Latencia menor para actualizaciones individuales
-    const audit = dbAudits.find(a => a.id === auditId);
-    const check = audit?.checks.find(c => c.id === checkId);
+  await delay(200);
+  const audit = dbAudits.find(a => a.id === auditId);
+  const check = audit?.checks.find(c => c.id === checkId);
+  
+  if (check && audit) {
+    // 1. Actualizamos el check
+    Object.assign(check, data);
+    check.updatedAt = new Date().toISOString();
     
-    if (check) {
-      // Aplicamos los cambios al objeto del mock (persistencia en memoria)
-      Object.assign(check, data);
-      check.updatedAt = new Date().toISOString();
+    // 2. Recalculamos el progreso global
+    const total = audit.checks.length;
+    const reviewed = audit.checks.filter(c => c.reviewed).length;
+    audit.progress = Math.round((reviewed / total) * 100);
+
+    // 3. LÓGICA DE ESTADO GLOBAL
+    // Si todos los checks han sido procesados...
+    if (reviewed === total) {
+      const hasKO = audit.checks.some(c => c.status === 'KO');
       
-      // Si todos los checks están revisados, podríamos actualizar el progreso aquí
-      if (audit) {
-        const completed = audit.checks.filter(c => c.status === 'OK' || c.status === 'KO').length;
-        audit.progress = Math.round((completed / audit.checks.length) * 100);
-      }
+      // Si todos OK -> DONE. Si hay KO -> IN_PROGRESS (o bloqueado)
+      audit.status = hasKO ? 'IN_PROGRESS' : 'DONE';
+    } else {
+      // Si empezamos a ejecutar pero no hemos terminado
+      audit.status = 'IN_PROGRESS';
     }
-    return { success: true };
+    
+    audit.updatedAt = new Date().toISOString();
   }
+  return { success: true };
+}
 };
