@@ -62,7 +62,7 @@ export default function AuditList() {
           <h3 className="text-2xl font-bold text-gray-900">Listado de Auditorías</h3>
         </div>
 
-        {/* BARRA DE HERRAMIENTAS ESTABLE Y ALINEADA */}
+        {/* BARRA DE HERRAMIENTAS */}
         <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between gap-4 mb-6">
 
           {/* GRUPO IZQUIERDO: Filtros */}
@@ -83,7 +83,7 @@ export default function AuditList() {
                 <option value="name-asc">Nombre (A-Z)</option>
                 <option value="progress-desc">Mayor progreso</option>
               </select>
-              {/* Flechita custom para que quede más pro */}
+              {}
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
@@ -109,7 +109,7 @@ export default function AuditList() {
               )}
             </div>
 
-            {/* 3. Botón Limpiar (ESTABLE: Siempre visible, cambia de estado) */}
+            {/* 3. Botón Limpiar  */}
             <button
               onClick={handleClear}
               disabled={!hasActiveFilters}
