@@ -12,13 +12,17 @@ export function useAuditRunner(initialAudit: Audit) {
     const [audit, setAudit] = useState<Audit>(initialAudit);
     const [isRunning, setIsRunning] = useState(false);
 
+    /**
+     * Ejecuta el flujo asíncrono de simulación para los puntos de control.
+     * Implementa lógica de re-intento para elementos pendientes o con fallos previos.
+     */
     const runSimulation = useCallback(async () => {
         if (isRunning) return;
 
-        setIsRunning(true); // Bloqueamos la UI para evitar ejecuciones duplicadas
+        setIsRunning(true);
 
         try {
-            // 1. Iniciamos la auditoría en el "servidor"
+            // Sincronización inicial del estado de la auditoría en la capa de servicios
             await api.runAudit(audit.id);
             setAudit(prev => ({ ...prev, status: 'IN_PROGRESS' }));
 
@@ -27,21 +31,20 @@ export function useAuditRunner(initialAudit: Audit) {
             for (let i = 0; i < currentChecks.length; i++) {
                 const check = currentChecks[i];
 
-                // Solo ignoramos los que ya están perfectos (OK).
-                // Los PENDING y los KO se volverán a procesar.
+                // Los elementos con estado 'OK' se consideran finalizados y se omiten
                 if (check.status === 'OK') continue;
 
-                // Fase: QUEUED
+                // Transición a estado de espera en cola
                 currentChecks[i] = { ...check, status: 'QUEUED' };
                 updateLocalProgress(currentChecks);
                 await new Promise(r => setTimeout(r, 400));
 
-                // Fase: RUNNING (Procesando)
+                // Transición a estado de procesamiento activo
                 currentChecks[i] = { ...currentChecks[i], status: 'RUNNING' };
                 updateLocalProgress(currentChecks);
                 await new Promise(r => setTimeout(r, 800));
 
-                // Fase: Resultado (15% probabilidad de KO según PDF)
+                // Determinación del resultado final basada en umbrales de probabilidad configurados
                 const isKO = Math.random() < 0.15;
                 const finalStatus = isKO ? 'KO' : 'OK';
 
@@ -54,17 +57,16 @@ export function useAuditRunner(initialAudit: Audit) {
 
                 updateLocalProgress(currentChecks);
 
-                // Persistimos el cambio de cada check individualmente
+                // Persistencia individual de cada punto de control para garantizar integridad de datos
                 await api.updateCheck(audit.id, check.id, { status: finalStatus, reviewed: true });
             }
 
-            // 2. Lógica de finalización 
+            // Evaluación del estado global resultante tras la ejecución
             const hasKO = currentChecks.some(c => c.status === 'KO');
 
             /**
-             * JUSTIFICACIÓN DE ESTADO:
-             * Si hay un KO, mantenemos IN_PROGRESS pero con progreso 100%. 
-             * Esto indica que la ejecución terminó pero requiere revisión manual (no es DONE).
+             * Si existen incidencias (KO), la auditoría permanece en 'IN_PROGRESS' 
+             * para requerir intervención manual, a pesar de haber completado el flujo.
              */
             const finalAuditStatus: AuditStatus = hasKO ? 'IN_PROGRESS' : 'DONE';
 
@@ -76,14 +78,16 @@ export function useAuditRunner(initialAudit: Audit) {
             }));
 
         } catch (error) {
-            console.error("Error durante la simulación:", error);
+            console.error("Error durante la simulación de auditoría:", error);
         } finally {
-            // El bloque finally asegura que el botón se desbloquee siempre, 
-            // falle la API o haya un KO.
+            // Asegura la liberación del estado de ejecución para permitir nuevas interacciones
             setIsRunning(false);
         }
     }, [audit, isRunning]);
 
+    /**
+     * Actualiza las métricas de progreso local basándose en el volumen de checks procesados.
+     */
     const updateLocalProgress = (checks: Check[]) => {
         const total = checks.length;
         const processed = checks.filter(c => c.status === 'OK' || c.status === 'KO').length;
@@ -93,36 +97,36 @@ export function useAuditRunner(initialAudit: Audit) {
     };
 
     /**
-     * Actualiza el estado de un check de forma optimista.
-     * Mejora la performance percibida y cuenta con mecanismo de rollback en caso de error.
+     * Realiza una actualización de estado optimista sobre un punto de control individual.
+     * Implementa un mecanismo de reversión (rollback) en caso de fallo en la persistencia.
      */
-// Función para actualización manual optimista
-  const updateCheckOptimistically = async (checkId: string, newStatus: 'OK' | 'KO') => {
-    const previousChecks = [...audit.checks];
+    const updateCheckOptimistically = async (checkId: string, newStatus: 'OK' | 'KO') => {
+        const previousChecks = [...audit.checks];
 
-    const updatedChecks = audit.checks.map(c => 
-      c.id === checkId ? { ...c, status: newStatus, reviewed: true, updatedAt: new Date().toISOString() } : c
-    );
-    
-    setAudit(prev => ({ 
-      ...prev, 
-      checks: updatedChecks, 
-      progress: calculateProgress(updatedChecks), // USANDO LA FUNCIÓN IMPORTADA
-      status: determineStatus(updatedChecks)     // USANDO LA FUNCIÓN IMPORTADA
-    }));
+        const updatedChecks = audit.checks.map(c => 
+            c.id === checkId ? { ...c, status: newStatus, reviewed: true, updatedAt: new Date().toISOString() } : c
+        );
+        
+        // Actualización inmediata de la interfaz de usuario
+        setAudit(prev => ({ 
+            ...prev, 
+            checks: updatedChecks, 
+            progress: calculateProgress(updatedChecks),
+            status: determineStatus(updatedChecks)
+        }));
 
-    try {
-      await api.updateCheck(audit.id, checkId, { status: newStatus, reviewed: true });
-    } catch (error) {
-      // Rollback en caso de error
-      setAudit(prev => ({ 
-        ...prev, 
-        checks: previousChecks,
-        progress: calculateProgress(previousChecks),
-        status: determineStatus(previousChecks)
-      }));
-    }
-  };
+        try {
+            await api.updateCheck(audit.id, checkId, { status: newStatus, reviewed: true });
+        } catch (error) {
+            // Restauración del estado previo ante errores de red o servidor
+            setAudit(prev => ({ 
+                ...prev, 
+                checks: previousChecks,
+                progress: calculateProgress(previousChecks),
+                status: determineStatus(previousChecks)
+            }));
+        }
+    };
 
     return { audit, isRunning, runSimulation, updateCheckOptimistically };
 }

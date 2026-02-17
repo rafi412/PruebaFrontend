@@ -42,9 +42,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   // Configuración de navegación lateral
   const menuItems = [
-    { icon: ClipboardList, label: 'Auditorías', path: '/' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Settings, label: 'Configuración', path: '/settings' },
+    { icon: ClipboardList, label: 'Auditorías', path: '/' }
   ];
 
   return (
@@ -103,10 +101,10 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 p-2">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-              RL
+              RE
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">Rafael López</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">Rafael Estévez</p>
               <p className="text-xs text-gray-500 truncate">Administrador</p>
             </div>
             <button className="p-2 text-gray-400 hover:text-red-500 transition-colors" aria-label="Cerrar sesión">

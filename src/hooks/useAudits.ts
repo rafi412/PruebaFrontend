@@ -5,7 +5,8 @@ import type { Audit } from '../types';
 
 /**
  * Hook para la gestión del estado del listado de auditorías.
- * Sincroniza los filtros con la URL y maneja estados de carga, error y modo offline.
+ * Sincroniza los filtros con los parámetros de búsqueda de la URL (Query Params)
+ * y gestiona los estados de carga, error y persistencia offline.
  */
 export function useAudits() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,17 +15,18 @@ export function useAudits() {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  // NUEVO: Estado para controlar si los datos vienen de la caché (offline)
+  // Estado para identificar si los datos actuales provienen de la caché local
   const [isOffline, setIsOffline] = useState(false);
 
-  // Parámetros extraídos de la URL (Fuente de verdad)
+  // Extracción de parámetros de la URL para mantener la sincronización del estado
   const page = Number(searchParams.get('page')) || 1;
   const search = searchParams.get('q') || '';
   const sort = searchParams.get('sort') || 'createdAt';
   const order = (searchParams.get('order') as 'asc' | 'desc') || 'desc';
 
   /**
-   * Función para obtener los datos de la API simulada.
+   * Realiza la petición a la capa de servicios para obtener los datos actualizados.
+   * Gestiona la respuesta del servidor simulado y el fallback a datos cacheados.
    */
   const fetchAudits = useCallback(async () => {
     setLoading(true);
@@ -35,23 +37,29 @@ export function useAudits() {
 
       setAudits(data.items);
       setTotal(data.total);
-      setIsOffline(data.isOffline); // Se pone true o false según la respuesta
+      
+      // Actualización del indicador de origen de datos basada en la respuesta del servicio
+      setIsOffline(data.isOffline);
 
     } catch (err) {
-      setError("Error de conexión");
-      // Si hay un error crítico y no hay ni siquiera caché:
+      setError("No se ha podido establecer conexión con el servidor.");
+      // Reinicio del estado offline en caso de fallo crítico sin acceso a caché
       setIsOffline(false);
     } finally {
       setLoading(false);
     }
   }, [page, search, sort, order]);
-  // Disparamos la búsqueda cada vez que cambian los parámetros en la URL
+
+  /**
+   * Efecto para sincronizar la carga de datos con cualquier cambio en los parámetros de navegación.
+   */
   useEffect(() => {
     fetchAudits();
   }, [fetchAudits]);
 
   /**
-   * Actualiza los parámetros de la URL de forma segura.
+   * Actualiza los parámetros de búsqueda en la URL de forma normalizada.
+   * Gestiona la eliminación de parámetros vacíos y el reseteo de la paginación.
    */
   const updateFilters = (newParams: any) => {
     const params = new URLSearchParams(searchParams);
@@ -64,7 +72,7 @@ export function useAudits() {
       }
     });
 
-    // Si se realiza una búsqueda nueva, reseteamos a la página 1
+    // Reset de la paginación al realizar una nueva búsqueda por texto
     if (newParams.q !== undefined) {
       params.set('page', '1');
     }

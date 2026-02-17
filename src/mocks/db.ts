@@ -5,7 +5,7 @@ import type { Audit } from "../types";
 /**
  * Catálogo de procesos y propietarios para generar datos de auditorías variadas.
  */
-const PROCESSES = ['Compras', 'Ventas', 'Seguridad', 'RRHH', 'Operaciones'];
+const PROCESSES = ['Compras', 'Ventas', 'Seguridad', 'RRHH', 'Operaciones', 'Legal'];
 export const dbUsers = [
   { id: 'u1', name: 'Ana López' },
   { id: 'u2', name: 'Carlos Ruiz' },
@@ -42,4 +42,7 @@ export const dbTemplates = [
   { id: 'tpl_2', name: 'Cumplimiento RGPD', process: 'Legal', checkCount: 8 },
   { id: 'tpl_3', name: 'Control de Inventario', process: 'Operaciones', checkCount: 15 },
   { id: 'tpl_4', name: 'Auditoría Financiera Q1', process: 'Ventas', checkCount: 10 },
+  { id: 'tpl_5', name: 'Revisión de RRHH', process: 'RRHH', checkCount: 7 },
+  { id: 'tpl_6', name: 'Auditoría de Compras', process: 'Compras', checkCount: 9 },
+  { id: 'tpl_7', name: 'Revisión de contratos', process: 'Legal', checkCount: 11 },
 ];

@@ -143,7 +143,7 @@ function AuditDetailContent({ auditData, onBack }: { auditData: Audit, onBack: (
 
               {/* Lado Derecho: Acciones Manuales y Estado */}
               <div className="flex items-center gap-6">
-                {/* Botones de Evaluación Manual (Visibles en Hover) */}
+                {/* Botones de Evaluación Manual */}
                 {!isRunning && audit.status !== 'DONE' && (
                   <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
