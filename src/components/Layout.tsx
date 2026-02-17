@@ -30,7 +30,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Overlay de oscurecimiento para cerrar el sidebar al interactuar fuera de él en móviles */}
+      {/* Overlay de oscurecimiento para cerrar el sidebar al interactuar fuera de él */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity"

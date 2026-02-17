@@ -60,19 +60,13 @@ export default function AuditList() {
 
   return (
     <div className="space-y-6">
-      {/* CABECERA TÍTULO + BARRA DE HERRAMIENTAS */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-8">
+      {/* BARRA DE HERRAMIENTAS: */}
+      <div className="bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3 w-full xl:w-auto">
 
-        {/* Lado Izquierdo: Título y Subtítulo */}
-        <div className="shrink-0">
-          <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Auditorías</h3>
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Gestión de procesos</p>
-        </div>
+        {/* GRUPO 1: FILTROS (Izquierda) */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
 
-        {/* Lado Derecho: Barra de Herramientas (Filtros + Acción) */}
-        <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-3 flex-1 lg:flex-none">
-
-          {/* 1. Selector de Ordenación (Más compacto) */}
+          {/* Selector de Ordenación */}
           <div className="relative shrink-0">
             <select
               value={`${sort}-${order}`}
@@ -80,26 +74,24 @@ export default function AuditList() {
                 const [newSort, newOrder] = e.target.value.split('-');
                 updateFilters({ sort: newSort, order: newOrder as 'asc' | 'desc' });
               }}
-              className="appearance-none bg-gray-50 border border-gray-100 text-[11px] font-black text-gray-600 rounded-lg pl-3 pr-8 py-2 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-gray-100 transition-colors uppercase tracking-tight"
+              className="appearance-none bg-gray-50 border border-gray-100 text-[11px] font-bold text-gray-600 rounded-lg pl-3 pr-8 py-2.5 outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-gray-100 transition-colors uppercase"
             >
               <option value="createdAt-desc">Recientes</option>
-              <option value="name-asc">Nombre A-Z</option>
-              <option value="name-desc">Nombre Z-A</option>
-              <option value="progress-desc">Progreso (descendente)</option>
-              <option value="progress-asc">Progreso (ascendente)</option>
+              <option value="name-asc">A-Z</option>
+              <option value="progress-desc">Progreso</option>
             </select>
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-              <svg width="8" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg width="8" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
           </div>
 
-          {/* 2. Buscador (Ancho controlado) */}
-          <div className="relative flex-1 md:w-64 lg:w-80">
+          {/* Buscador */}
+          <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input
               type="text"
               placeholder="Buscar..."
-              className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+              className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -109,28 +101,31 @@ export default function AuditList() {
               </button>
             )}
           </div>
+        </div>
 
-          {/* 3. Botón Limpiar Filtros */}
+        {/* GRUPO 2: ACCIONES (Derecha) */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* Botón Limpiar */}
           <button
             onClick={handleClear}
             disabled={!hasActiveFilters}
-            className={`p-2 rounded-lg transition-all border border-transparent ${hasActiveFilters ? "text-red-500 hover:bg-red-50" : "text-gray-200 cursor-not-allowed"
+            className={`p-2.5 rounded-lg transition-all border border-transparent ${hasActiveFilters ? "text-red-500 bg-red-50 hover:bg-red-100" : "text-gray-200 cursor-not-allowed"
               }`}
             title="Limpiar filtros"
           >
             <FilterX size={18} />
           </button>
 
-          {/* 4. Separador visual */}
           <div className="w-px h-6 bg-gray-100 mx-1 hidden sm:block"></div>
 
-          {/* 5. Acción Principal */}
+          {/* Botón Nueva Auditoría */}
           <button
             onClick={() => navigate('/create')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95 shrink-0"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap"
           >
             <Plus size={18} />
-            <span className="hidden sm:inline">Nueva</span>
+            <span className="hidden sm:inline">Nueva Auditoría</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
         </div>
       </div>
