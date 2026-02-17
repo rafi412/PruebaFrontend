@@ -11,73 +11,99 @@ export const api = {
   /**
    * Obtiene el listado paginado y filtrado de auditorías.
    */
-  getAudits: async (page = 1, pageSize = 10, search = '', sort = 'createdAt', order = 'desc') => {
-  const ms = Math.floor(Math.random() * (1200 - 300 + 1)) + 300;
-  await delay(ms);
+  // Función auxiliar para saber si estamos simulando offline
+  isSimulatedOffline: () => localStorage.getItem('simulate_offline') === 'true',
 
-  if (Math.random() < 0.15) throw new Error("Error de servidor simulado");
+ getAudits: async (page = 1, pageSize = 10, search = '', sort = 'createdAt', order = 'desc') => {
+    await delay(Math.floor(Math.random() * (1200 - 300 + 1)) + 300);
 
-  // 1. Filtrado (Aseguramos que siempre haya un array)
-  let data = [...dbAudits].filter(audit => 
-    audit.name.toLowerCase().includes(search.toLowerCase()) ||
-    audit.process.toLowerCase().includes(search.toLowerCase())
-  );
+    // SIMULACIÓN: Error si el interruptor está ON o por el 15% aleatorio
+    const shouldFail = api.isSimulatedOffline() || Math.random() < 0.15;
 
-  // 2. Ordenación Robusta
-  data.sort((a, b) => {
-    const valA = a[sort as keyof typeof a];
-    const valB = b[sort as keyof typeof b];
-
-    // Manejo de nulos o indefinidos
-    if (valA === undefined || valB === undefined) return 0;
-
-    // Si son strings (Name, Process...)
-    if (typeof valA === 'string' && typeof valB === 'string') {
-      return order === 'asc' 
-        ? valA.localeCompare(valB) 
-        : valB.localeCompare(valA);
+    if (shouldFail) {
+      const cached = localStorage.getItem('audits_cache');
+      if (cached) {
+        return { ...JSON.parse(cached), isOffline: true };
+      }
+      throw new Error("Error de conexión");
     }
-    
-    // Si son números o fechas (Progress, createdAt...)
-    // Convertimos a número para comparar (las fechas funcionan con getTime() o comparando strings ISO)
-    const numA = typeof valA === 'string' ? new Date(valA).getTime() : (valA as number);
-    const numB = typeof valB === 'string' ? new Date(valB).getTime() : (valB as number);
 
-    return order === 'asc' ? numA - numB : numB - numA;
-  });
+    // 3. Lógica de Filtrado (Server-side simulation)
+    let data = [...dbAudits].filter(audit =>
+      audit.name.toLowerCase().includes(search.toLowerCase()) ||
+      audit.process.toLowerCase().includes(search.toLowerCase())
+    );
 
-  const start = (page - 1) * pageSize;
-  return {
-    items: data.slice(start, start + pageSize),
-    total: data.length
-  };
-},
+    // 4. Lógica de Ordenación Robusta (Server-side simulation)
+    data.sort((a, b) => {
+      const valA = a[sort as keyof typeof a];
+      const valB = b[sort as keyof typeof b];
+
+      if (valA === undefined || valB === undefined) return 0;
+
+      // Caso A: Comparación de cadenas de texto (Nombre, Proceso)
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        // Verificación de si la cadena es una fecha ISO
+        const isDate = valA.includes('T') && !isNaN(Date.parse(valA));
+
+        if (isDate) {
+          const timeA = new Date(valA).getTime();
+          const timeB = new Date(valB).getTime();
+          return order === 'asc' ? timeA - timeB : timeB - timeA;
+        }
+
+        return order === 'asc'
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
+      // Caso B: Comparación numérica (Progreso)
+      return order === 'asc'
+        ? (valA as number) - (valB as number)
+        : (valB as number) - (valA as number);
+    });
+
+    // 5. Lógica de Paginación
+    const start = (page - 1) * pageSize;
+    const paginatedItems = data.slice(start, start + pageSize);
+
+    const result = {
+      items: paginatedItems,
+      total: data.length,
+      isOffline: false // Indica que los datos provienen de una "petición" exitosa
+    };
+
+    // 6. Persistencia en LocalStorage para soporte offline en futuras peticiones fallidas
+    localStorage.setItem('audits_cache', JSON.stringify(result));
+
+    return result;
+  },
 
   /**
    * Obtiene el detalle de una auditoría específica por su ID.
    */
   getAuditById: async (id: string) => {
-  const ms = Math.floor(Math.random() * (800 - 300 + 1)) + 300;
-  await delay(ms);
-  
-  const audit = dbAudits.find(a => a.id === id);
-  if (!audit) throw new Error("Auditoría no encontrada");
+    const ms = Math.floor(Math.random() * (800 - 300 + 1)) + 300;
+    await delay(ms);
 
-  // Si la auditoría no tiene checks, los generamos respetando su estado global
-  if (audit.checks.length === 0) {
-    const isDone = audit.status === 'DONE';
-    
-    // Generamos checks basados en el estado de la auditoría
-    audit.checks = [
-      { id: 'c1', title: 'Verificar control de acceso', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
-      { id: 'c2', title: 'Revisar backups semanales', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
-      { id: 'c3', title: 'Validar cifrado de datos', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
-      { id: 'c4', title: 'Gestión de vulnerabilidades', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
-    ];
-  }
+    const audit = dbAudits.find(a => a.id === id);
+    if (!audit) throw new Error("Auditoría no encontrada");
 
-  return { audit };
-},
+    // Si la auditoría no tiene checks, los generamos respetando su estado global
+    if (audit.checks.length === 0) {
+      const isDone = audit.status === 'DONE';
+
+      // Generamos checks basados en el estado de la auditoría
+      audit.checks = [
+        { id: 'c1', title: 'Verificar control de acceso', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+        { id: 'c2', title: 'Revisar backups semanales', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+        { id: 'c3', title: 'Validar cifrado de datos', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+        { id: 'c4', title: 'Gestión de vulnerabilidades', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+      ];
+    }
+
+    return { audit };
+  },
 
   /**
    * Inicia el proceso de ejecución de una auditoría.

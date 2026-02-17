@@ -26,7 +26,7 @@ export default function AuditList() {
   // Obtención de estado y lógica desde el custom hook
   const {
     audits, loading, error, page, search, sort, order,
-    totalPages, updateFilters, retry
+    totalPages, updateFilters, retry, isOffline
   } = useAudits();
 
   // Estado local para el manejo del input de búsqueda (Debounce)
@@ -129,6 +129,21 @@ export default function AuditList() {
           </button>
         </div>
       </div>
+
+      {/* AVISO OFFLINE: */}
+      {isOffline && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="bg-amber-500 p-2 rounded-lg text-white">
+            <RefreshCw size={20} className="animate-spin duration-[10000ms]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-900 leading-none">Modo de lectura (Offline)</p>
+            <p className="text-xs text-amber-700 mt-1 font-medium">
+              No se ha podido sincronizar con el servidor. Mostrando datos locales.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* CONTENEDOR DE DATOS */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[450px]">
