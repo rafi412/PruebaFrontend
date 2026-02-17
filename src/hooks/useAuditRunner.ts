@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { api } from '../services/api';
 import type { Check, Audit, AuditStatus } from '../types';
+import { calculateProgress, determineStatus } from '../utils/auditLogic';
 
 /**
  * Orquestador de la simulación de ejecución de auditoría.
@@ -57,7 +58,7 @@ export function useAuditRunner(initialAudit: Audit) {
                 await api.updateCheck(audit.id, check.id, { status: finalStatus, reviewed: true });
             }
 
-            // 2. Lógica de finalización (Punto 6 del PDF)
+            // 2. Lógica de finalización 
             const hasKO = currentChecks.some(c => c.status === 'KO');
 
             /**
@@ -91,5 +92,37 @@ export function useAuditRunner(initialAudit: Audit) {
         setAudit(prev => ({ ...prev, checks, progress }));
     };
 
-    return { audit, isRunning, runSimulation };
+    /**
+     * Actualiza el estado de un check de forma optimista.
+     * Mejora la performance percibida y cuenta con mecanismo de rollback en caso de error.
+     */
+// Función para actualización manual optimista
+  const updateCheckOptimistically = async (checkId: string, newStatus: 'OK' | 'KO') => {
+    const previousChecks = [...audit.checks];
+
+    const updatedChecks = audit.checks.map(c => 
+      c.id === checkId ? { ...c, status: newStatus, reviewed: true, updatedAt: new Date().toISOString() } : c
+    );
+    
+    setAudit(prev => ({ 
+      ...prev, 
+      checks: updatedChecks, 
+      progress: calculateProgress(updatedChecks), // USANDO LA FUNCIÓN IMPORTADA
+      status: determineStatus(updatedChecks)     // USANDO LA FUNCIÓN IMPORTADA
+    }));
+
+    try {
+      await api.updateCheck(audit.id, checkId, { status: newStatus, reviewed: true });
+    } catch (error) {
+      // Rollback en caso de error
+      setAudit(prev => ({ 
+        ...prev, 
+        checks: previousChecks,
+        progress: calculateProgress(previousChecks),
+        status: determineStatus(previousChecks)
+      }));
+    }
+  };
+
+    return { audit, isRunning, runSimulation, updateCheckOptimistically };
 }

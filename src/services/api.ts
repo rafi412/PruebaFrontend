@@ -57,24 +57,27 @@ export const api = {
    * Obtiene el detalle de una auditoría específica por su ID.
    */
   getAuditById: async (id: string) => {
-    const ms = Math.floor(Math.random() * (800 - 300 + 1)) + 300;
-    await delay(ms);
+  const ms = Math.floor(Math.random() * (800 - 300 + 1)) + 300;
+  await delay(ms);
+  
+  const audit = dbAudits.find(a => a.id === id);
+  if (!audit) throw new Error("Auditoría no encontrada");
 
-    const audit = dbAudits.find(a => a.id === id);
-    if (!audit) throw new Error("Auditoría no encontrada");
+  // Si la auditoría no tiene checks, los generamos respetando su estado global
+  if (audit.checks.length === 0) {
+    const isDone = audit.status === 'DONE';
+    
+    // Generamos checks basados en el estado de la auditoría
+    audit.checks = [
+      { id: 'c1', title: 'Verificar control de acceso', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+      { id: 'c2', title: 'Revisar backups semanales', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+      { id: 'c3', title: 'Validar cifrado de datos', priority: 'HIGH', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+      { id: 'c4', title: 'Gestión de vulnerabilidades', priority: 'MEDIUM', status: isDone ? 'OK' : 'PENDING', reviewed: isDone, updatedAt: new Date().toISOString() },
+    ];
+  }
 
-    // Si la auditoría no tiene checks (es nueva), generamos unos por defecto para la simulación
-    if (audit.checks.length === 0) {
-      audit.checks = [
-        { id: 'c1', title: 'Verificar control de acceso a servidores', priority: 'HIGH', status: 'PENDING', reviewed: false, updatedAt: new Date().toISOString() },
-        { id: 'c2', title: 'Revisar logs de auditoría trimestrales', priority: 'MEDIUM', status: 'PENDING', reviewed: false, updatedAt: new Date().toISOString() },
-        { id: 'c3', title: 'Validar políticas de contraseñas', priority: 'LOW', status: 'PENDING', reviewed: false, updatedAt: new Date().toISOString() },
-        { id: 'c4', title: 'Cifrado de bases de datos en reposo', priority: 'HIGH', status: 'PENDING', reviewed: false, updatedAt: new Date().toISOString() },
-      ];
-    }
-
-    return { audit };
-  },
+  return { audit };
+},
 
   /**
    * Inicia el proceso de ejecución de una auditoría.
