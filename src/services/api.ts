@@ -14,70 +14,70 @@ export const api = {
   // Función auxiliar para saber si estamos simulando offline
   isSimulatedOffline: () => localStorage.getItem('simulate_offline') === 'true',
 
- getAudits: async (page = 1, pageSize = 10, search = '', sort = 'createdAt', order = 'desc') => {
-    await delay(Math.floor(Math.random() * (1200 - 300 + 1)) + 300);
+ /**
+ * Obtiene el listado de auditorías con soporte para búsqueda multi-campo,
+ * paginación, ordenación y modo offline.
+ */
+getAudits: async (
+  page: number = 1, 
+  pageSize: number = 10, 
+  search: string = '', 
+  sort: string = 'createdAt', 
+  order: 'asc' | 'desc' = 'desc'
+) => {
+  const ms = Math.floor(Math.random() * (1200 - 300 + 1)) + 300;
+  await delay(ms);
 
-    // SIMULACIÓN: Error si el interruptor está ON o por el 15% aleatorio
-    const shouldFail = api.isSimulatedOffline() || Math.random() < 0.15;
+  const isNetworkError = api.isSimulatedOffline() || Math.random() < 0.15;
 
-    if (shouldFail) {
-      const cached = localStorage.getItem('audits_cache');
-      if (cached) {
-        return { ...JSON.parse(cached), isOffline: true };
-      }
-      throw new Error("Error de conexión");
+  if (isNetworkError) {
+    const cachedData = localStorage.getItem('audits_cache');
+    if (cachedData) {
+      return { ...JSON.parse(cachedData), isOffline: true };
     }
+    throw new Error("Error de conexión al servidor simulado");
+  }
 
-    // 3. Lógica de Filtrado (Server-side simulation)
-    let data = [...dbAudits].filter(audit =>
-      audit.name.toLowerCase().includes(search.toLowerCase()) ||
-      audit.process.toLowerCase().includes(search.toLowerCase())
-    );
+  // LÓGICA DE FILTRADO ACTUALIZADA
+  const query = search.toLowerCase();
+  let data = [...dbAudits].filter(audit => 
+    // Búsqueda por nombre de la auditoría
+    audit.name.toLowerCase().includes(query) ||
+    // Búsqueda por proceso de negocio
+    audit.process.toLowerCase().includes(query) ||
+    // Búsqueda por nombre del responsable (Owner)
+    audit.owner.name.toLowerCase().includes(query)
+  );
 
-    // 4. Lógica de Ordenación Robusta (Server-side simulation)
-    data.sort((a, b) => {
-      const valA = a[sort as keyof typeof a];
-      const valB = b[sort as keyof typeof b];
+  // Lógica de ordenación (se mantiene igual)
+  data.sort((a, b) => {
+    const valA = a[sort as keyof typeof a];
+    const valB = b[sort as keyof typeof b];
+    if (valA === undefined || valB === undefined) return 0;
 
-      if (valA === undefined || valB === undefined) return 0;
-
-      // Caso A: Comparación de cadenas de texto (Nombre, Proceso)
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        // Verificación de si la cadena es una fecha ISO
-        const isDate = valA.includes('T') && !isNaN(Date.parse(valA));
-
-        if (isDate) {
-          const timeA = new Date(valA).getTime();
-          const timeB = new Date(valB).getTime();
-          return order === 'asc' ? timeA - timeB : timeB - timeA;
-        }
-
-        return order === 'asc'
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      const isDate = valA.includes('T') && !isNaN(Date.parse(valA));
+      if (isDate) {
+        return order === 'asc' 
+          ? new Date(valA).getTime() - new Date(valB).getTime() 
+          : new Date(valB).getTime() - new Date(valA).getTime();
       }
+      return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    }
+    return order === 'asc' ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+  });
 
-      // Caso B: Comparación numérica (Progreso)
-      return order === 'asc'
-        ? (valA as number) - (valB as number)
-        : (valB as number) - (valA as number);
-    });
+  const start = (page - 1) * pageSize;
+  const result = {
+    items: data.slice(start, start + pageSize),
+    total: data.length,
+    isOffline: false
+  };
 
-    // 5. Lógica de Paginación
-    const start = (page - 1) * pageSize;
-    const paginatedItems = data.slice(start, start + pageSize);
-
-    const result = {
-      items: paginatedItems,
-      total: data.length,
-      isOffline: false // Indica que los datos provienen de una "petición" exitosa
-    };
-
-    // 6. Persistencia en LocalStorage para soporte offline en futuras peticiones fallidas
-    localStorage.setItem('audits_cache', JSON.stringify(result));
-
-    return result;
-  },
+  localStorage.setItem('audits_cache', JSON.stringify(result));
+  
+  return result;
+},
 
   /**
    * Obtiene el detalle de una auditoría específica por su ID.

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import {
   LayoutDashboard,
   ClipboardList,
-  Settings,
   Menu,
   X,
   LogOut,
