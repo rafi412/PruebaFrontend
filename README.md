@@ -32,9 +32,9 @@ El código está organizado por capas para separar la lógica de la representaci
 
 **src/mocks:** Generación de un dataset realista (60+ auditorías, 10 plantillas, 12 responsables) cumpliendo con los requisitos de volumen del PDF. 
 
-⚙️ Funcionalidades Destacadas 
+**Funcionalidades Destacadas**
 
-**1. Motor de Simulación Asíncrona **
+**1. Motor de Simulación Asíncrona**
 
 Al ejecutar una auditoría, los puntos de control pasan por un ciclo de vida real: PENDING → QUEUED → RUNNING → OK/KO. He implementado bloques try...finally para asegurar que la UI nunca se bloquee ante fallos de red simulados. 
 
