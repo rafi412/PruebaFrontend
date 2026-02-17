@@ -3,7 +3,7 @@
 Este proyecto es una interfaz de producto real diseñada para la gestión de auditorías y puntos de control. Se ha puesto especial énfasis en la arquitectura de datos, la simulación asíncrona y una experiencia de usuario (UX) profesional y accesible. 
 
 <a href="(https://prueba-frontend-zeta.vercel.app/)" target="_blank" rel="noopener noreferrer">
-  **Ver página (Vercel)**
+  Ver página (Vercel)
 </a>
 
 **Stack Tecnológico y Justificación** 
