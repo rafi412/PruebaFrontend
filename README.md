@@ -42,7 +42,7 @@ En las evaluaciones manuales, la interfaz responde al instante. Si la persistenc
 
 **3. Modo Offline Simulado**
 
-He incluido un interruptor en la barra superior para forzar el estado Offline. Al activarlo, la aplicación sirve los datos desde el caché local (localStorage), demostrando la resiliencia del sistema en condiciones de baja conectividad. 
+La aplicación incluye un botón en el modo de desarrollo para probar el modo offline, para no recargar siempre que se quiera comprobar y no dejar botones innecesarios en la versión final. 
 
 **Instalación y Arranque**
 
@@ -80,10 +80,8 @@ Dashboard Estadístico: Implementar gráficos de cumplimiento por proceso utiliz
 
 PWA: Configurar Service Workers para una experiencia offline nativa sin necesidad de simulación. 
 
+Añadir seguridad y autenticación a la API.
+
  
-
-**Nota para el evaluador**
-
-La aplicación incluye una tasa de error aleatoria del 15% en las peticiones para demostrar el manejo de estados de error y el botón de reintento. Si experimenta un error de carga, es un comportamiento esperado y diseñado para la prueba. 
 
  
